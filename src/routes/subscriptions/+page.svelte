@@ -15,23 +15,33 @@
 
 <div>
 	{#if data.subscriptions.length === 0}
-		<p class="text-gray-500">No subscriptions found.</p>
+		<p class="text-ink-muted">No subscriptions found.</p>
 	{:else}
-		<ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-			{#each data.subscriptions as sub}
-				<li class="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm flex flex-col gap-2">
+		<ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{#each data.subscriptions as sub (sub.id)}
+				<li class="flex flex-col gap-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm">
 					<div class="flex items-center justify-between">
 						<span class="font-medium">{sub.entities.map((e) => e.type ?? e.id).join(', ')}</span>
-						<span class="px-2 py-0.5 rounded-full text-xs font-medium {sub.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+						<span
+							class="rounded-full px-2 py-0.5 text-xs font-medium {sub.status === 'active'
+								? 'bg-success-soft text-success-ink'
+								: 'bg-surface-2 text-ink-muted'}"
+						>
 							{sub.status}
 						</span>
 					</div>
-					<div class="text-xs text-gray-500 space-y-1">
-						<div>Endpoint: <span class="text-gray-700">{sub.notification.endpoint.uri}</span></div>
-						<div>Triggers: <span class="text-gray-700">{sub.notificationTrigger.join(', ')}</span></div>
+					<div class="space-y-1 text-xs text-ink-muted">
+						<div>Endpoint: <span class="text-ink-muted">{sub.notification.endpoint.uri}</span></div>
+						<div>
+							Triggers: <span class="text-ink-muted">{sub.notificationTrigger.join(', ')}</span>
+						</div>
 						<div class="flex gap-4">
-							<span>Sent: <span class="text-gray-700">{sub.notification.timesSent}</span></span>
-							<span>Last: <span class="text-gray-700">{timeAgo(sub.notification.lastNotification)}</span></span>
+							<span>Sent: <span class="text-ink-muted">{sub.notification.timesSent}</span></span>
+							<span
+								>Last: <span class="text-ink-muted"
+									>{timeAgo(sub.notification.lastNotification)}</span
+								></span
+							>
 						</div>
 					</div>
 				</li>

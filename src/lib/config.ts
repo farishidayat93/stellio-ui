@@ -8,25 +8,14 @@ export type Theme = 'indigo' | 'emerald' | 'rose' | 'amber';
 
 export const theme: Theme = 'indigo';
 
-export const themes: Record<Theme, { active: string; badge: string; ring: string }> = {
-	indigo: {
-		active: 'bg-indigo-50 text-indigo-700',
-		badge: 'bg-indigo-100 text-indigo-700',
-		ring: 'focus:ring-indigo-100'
-	},
-	emerald: {
-		active: 'bg-emerald-50 text-emerald-700',
-		badge: 'bg-emerald-100 text-emerald-700',
-		ring: 'focus:ring-emerald-100'
-	},
-	rose: {
-		active: 'bg-rose-50 text-rose-700',
-		badge: 'bg-rose-100 text-rose-700',
-		ring: 'focus:ring-rose-100'
-	},
-	amber: {
-		active: 'bg-amber-50 text-amber-700',
-		badge: 'bg-amber-100 text-amber-700',
-		ring: 'focus:ring-amber-100'
-	}
+/**
+ * Base accent color per theme. The soft/strong shades used by the UI are derived
+ * from these with `color-mix()` in `src/routes/layout.css`, so the accent adapts
+ * to the active light/dark/dim mode automatically.
+ */
+export const themes: Record<Theme, string> = {
+	indigo: 'oklch(0.585 0.233 277)',
+	emerald: 'oklch(0.596 0.145 163)',
+	rose: 'oklch(0.645 0.246 16)',
+	amber: 'oklch(0.769 0.188 70)'
 };

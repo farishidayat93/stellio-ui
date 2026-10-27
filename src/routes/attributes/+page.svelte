@@ -13,7 +13,9 @@
 
 	let search = $state('');
 	let filtered = $derived(
-		search ? data.attributes.filter((a) => a.toLowerCase().includes(search.toLowerCase())) : data.attributes
+		search
+			? data.attributes.filter((a) => a.toLowerCase().includes(search.toLowerCase()))
+			: data.attributes
 	);
 
 	let selected = $state<string | null>(null);
@@ -23,7 +25,11 @@
 	let saved = $state(false);
 
 	async function selectAttribute(name: string) {
-		if (selected === name) { selected = null; info = null; return; }
+		if (selected === name) {
+			selected = null;
+			info = null;
+			return;
+		}
 		selected = name;
 		loading = true;
 		saved = false;
@@ -38,31 +44,34 @@
 	}
 
 	async function save() {
-		await axios.post(`/api/attributes/${selected}`, { fieldType: config.fieldType, defaultValue: config.defaultValue });
+		await axios.post(`/api/attributes/${selected}`, {
+			fieldType: config.fieldType,
+			defaultValue: config.defaultValue
+		});
 		saved = true;
 		setTimeout(() => (saved = false), 2000);
 	}
 </script>
 
-<div class="flex gap-6 h-full">
+<div class="flex h-full gap-6">
 	<!-- Left: attribute list -->
-	<div class="w-72 shrink-0 flex flex-col gap-3">
+	<div class="flex w-72 shrink-0 flex-col gap-3">
 		<div class="flex items-center justify-between">
-			<span class="text-xs text-gray-400">{filtered.length} of {data.attributes.length}</span>
+			<span class="text-xs text-ink-faint">{filtered.length} of {data.attributes.length}</span>
 		</div>
 		<input
 			type="search"
 			placeholder="Search..."
 			bind:value={search}
-			class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 {data.t.ring}"
+			class="rounded-lg border border-line px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent-ring"
 		/>
-		<ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg bg-white overflow-y-auto">
-			{#each filtered as attr}
+		<ul class="divide-y divide-line overflow-y-auto rounded-lg border border-line bg-surface">
+			{#each filtered as attr (attr)}
 				<li>
 					<button
 						onclick={() => selectAttribute(attr)}
-						class="w-full px-4 py-2.5 text-sm text-left transition-colors flex items-center justify-between
-							{selected === attr ? data.t.active : 'hover:bg-gray-50'}"
+						class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors
+							{selected === attr ? 'bg-accent text-accent-ink' : 'hover:bg-surface-2'}"
 					>
 						<span>{attr}</span>
 					</button>
@@ -73,44 +82,62 @@
 
 	<!-- Right: editor panel -->
 	{#if selected}
-		<div class="flex-1 border border-gray-200 rounded-lg bg-white overflow-y-auto">
-			<div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+		<div class="flex-1 overflow-y-auto rounded-lg border border-line bg-surface">
+			<div class="flex items-center justify-between border-b border-line-soft px-5 py-4">
 				<div class="flex items-center gap-2">
-					<span class="font-semibold text-sm">{selected}</span>
+					<span class="text-sm font-semibold">{selected}</span>
 					{#if info}
-						{#each info.attributeTypes as t}
-							<span class="px-1.5 py-0.5 rounded text-xs {data.t.badge}">{t}</span>
+						{#each info.attributeTypes as t (t)}
+							<span class="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-accent-soft-ink"
+								>{t}</span
+							>
 						{/each}
 					{/if}
 				</div>
-				<button onclick={() => { selected = null; info = null; }} class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+				<button
+					onclick={() => {
+						selected = null;
+						info = null;
+					}}
+					class="text-lg leading-none text-ink-faint hover:text-ink-muted">&times;</button
+				>
 			</div>
 
 			{#if loading}
-				<p class="text-xs text-gray-400 p-5">Loading...</p>
+				<p class="p-5 text-xs text-ink-faint">Loading...</p>
 			{:else if info}
-				<div class="p-5 space-y-6">
+				<div class="space-y-6 p-5">
 					<!-- Used by -->
 					<div class="space-y-2">
-						<p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Used by {info.attributeCount} entities across</p>
+						<p class="text-xs font-medium tracking-wide text-ink-muted uppercase">
+							Used by {info.attributeCount} entities across
+						</p>
 						<div class="flex flex-wrap gap-1">
-							{#each info.typeNames as typeName}
-								<span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs">{typeName}</span>
+							{#each info.typeNames as typeName (typeName)}
+								<span class="rounded bg-surface-2 px-2 py-0.5 text-xs text-ink-muted"
+									>{typeName}</span
+								>
 							{/each}
 						</div>
 					</div>
 
-					<hr class="border-gray-100" />
+					<hr class="border-line-soft" />
 
-					<!-- Field type -->
+					<!-- Caption, not a label: the buttons below are one choice among
+					     several alternatives, so no single control owns it. -->
 					<div class="space-y-2">
-						<label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Field Type</label>
-						<div class="flex gap-2 flex-wrap">
-							{#each FIELD_TYPES as ft}
+						<p class="text-xs font-medium tracking-wide text-ink-muted uppercase">Field Type</p>
+						<div class="flex flex-wrap gap-2">
+							{#each FIELD_TYPES as ft (ft)}
 								<button
-									onclick={() => { config.fieldType = ft; config.defaultValue = ''; }}
-									class="px-3 py-1.5 rounded-md text-sm border transition-colors
-										{config.fieldType === ft ? data.t.active + ' border-transparent' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}"
+									onclick={() => {
+										config.fieldType = ft;
+										config.defaultValue = '';
+									}}
+									class="rounded-md border px-3 py-1.5 text-sm transition-colors
+										{config.fieldType === ft
+										? 'bg-accent text-accent-ink' + ' border-transparent'
+										: 'border-line text-ink-muted hover:bg-surface-2'}"
 								>
 									{ft}
 								</button>
@@ -118,34 +145,54 @@
 						</div>
 					</div>
 
-					<!-- Default value -->
+					<!-- Caption, not a label: the control below depends on the field
+					     type, so no single control owns it. -->
 					<div class="space-y-2">
-						<label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Default Value</label>
+						<p class="text-xs font-medium tracking-wide text-ink-muted uppercase">Default Value</p>
 						{#if config.fieldType === 'boolean'}
-							<select bind:value={config.defaultValue} class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}">
+							<select
+								bind:value={config.defaultValue}
+								class="w-full rounded-md border border-line px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent-ring"
+							>
 								<option value="">— none —</option>
 								<option value="true">true</option>
 								<option value="false">false</option>
 							</select>
 						{:else if config.fieldType === 'date'}
-							<input type="date" bind:value={config.defaultValue} class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
+							<input
+								type="date"
+								bind:value={config.defaultValue}
+								class="w-full rounded-md border border-line px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent-ring"
+							/>
 						{:else if config.fieldType === 'json'}
 							<textarea
 								bind:value={config.defaultValue}
 								rows={4}
 								placeholder="empty object"
-								class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring} font-mono resize-none"
+								class="w-full resize-none rounded-md border border-line px-3 py-1.5 font-mono text-sm outline-none focus:ring-2 focus:ring-accent-ring"
 							></textarea>
 						{:else if config.fieldType === 'number'}
-							<input type="number" bind:value={config.defaultValue} placeholder="0" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
+							<input
+								type="number"
+								bind:value={config.defaultValue}
+								placeholder="0"
+								class="w-full rounded-md border border-line px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent-ring"
+							/>
 						{:else}
-							<input type="text" bind:value={config.defaultValue} placeholder="Default value..." class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
+							<input
+								type="text"
+								bind:value={config.defaultValue}
+								placeholder="Default value..."
+								class="w-full rounded-md border border-line px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent-ring"
+							/>
 						{/if}
 					</div>
 
 					<button
 						onclick={save}
-						class="px-4 py-2 rounded-md text-sm font-medium transition-colors {saved ? 'bg-green-100 text-green-700' : data.t.active}"
+						class="rounded-md px-4 py-2 text-sm font-medium transition-colors {saved
+							? 'bg-success-soft text-success-ink'
+							: 'bg-accent text-accent-ink'}"
 					>
 						{saved ? 'Saved ✓' : 'Save'}
 					</button>
@@ -153,7 +200,9 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="flex-1 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+		<div
+			class="flex flex-1 items-center justify-center rounded-lg border border-dashed border-line text-sm text-ink-faint"
+		>
 			Select an attribute to configure it
 		</div>
 	{/if}

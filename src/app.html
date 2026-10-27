@@ -1,10 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
 		<link rel="icon" href="/favicon.ico" />
+		<title>Stellio UI</title>
+		<script>
+			// Apply the saved theme before first paint to avoid a flash of light UI.
+			(function () {
+				try {
+					var mode = localStorage.getItem('stellio-theme');
+					if (mode !== 'light' && mode !== 'dark' && mode !== 'dim') mode = 'light';
+					document.documentElement.dataset.theme = mode;
+				} catch (e) {
+					document.documentElement.dataset.theme = 'light';
+				}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

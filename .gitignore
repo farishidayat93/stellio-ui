@@ -28,4 +28,7 @@ test-results
 # Local DB
 stellio-ui.db
 
+# Docker bind mount alternative to the named volume (see compose.yaml)
+/data
+
 .vscode

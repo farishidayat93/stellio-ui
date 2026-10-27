@@ -1,0 +1,66 @@
+# Stellio UI — single-container deployment.
+#
+#   cp .env.example .env          # once, to point at your broker
+#   docker compose up -d --build  # http://localhost:3000
+#
+# Compose reads the `.env` in this directory for the two ${...} values below, so
+# the container talks to the same broker `npm run dev` uses. Everything else is
+# baked into the image; runtime state lives in the named volume.
+
+name: stellio-ui
+
+services:
+  stellio-ui:
+    # Built from ./Dockerfile. Once a registry image exists, drop `build:` and
+    # point `image:` at it instead (e.g. ghcr.io/<org>/stellio-ui:latest).
+    image: stellio-ui:local
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    ports:
+      # Browse to http://localhost:3000; set UI_PORT in .env to change it.
+      - '${UI_PORT:-3000}:3000'
+    environment:
+      # Seed values: read on the very first start, then the Settings page owns
+      # them (see README › Multiple Brokers). `host.docker.internal` reaches a
+      # broker running on the Docker host itself.
+      STELLIO_HOST: ${STELLIO_HOST:-host.docker.internal}
+      STELLIO_PORT: ${STELLIO_PORT:-8765}
+
+      # Idle knobs — uncomment to override the built-in defaults.
+      # STELLIO_TIMEOUT_MS: '60000'    # per-request timeout for Stellio calls
+      # STELLIO_MAX_CONCURRENCY: '4'   # max Stellio requests in flight at once
+      # STELLIO_CACHE_DISABLED: 'false'  # bypass the in-process response cache
+
+      # Uncomment when the UI is served under a hostname other than
+      # localhost:3000, so SvelteKit builds absolute URLs against it:
+      # ORIGIN: https://stellio-ui.example.com
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      # Settings + cached type snapshots (the SQLite file is written to
+      # /data/stellio-ui.db). A named volume gets the right ownership on
+      # creation; for a bind mount instead — ./data:/data — run
+      # `mkdir -p data && chown 1000:1000 data` first, as the container runs as
+      # the unprivileged `node` user (uid 1000).
+      - stellio-data:/data
+    healthcheck:
+      # Mirrors the image's HEALTHCHECK so `docker compose ps` reports health
+      # without a rebuild. Deliberately free of `${...}` and backticks: Compose
+      # interpolation and the shell would both try to expand them. `/` answers
+      # 200 even before a broker is configured.
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const p = process.env.PORT || 3000; fetch('http://127.0.0.1:' + p + '/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  stellio-data:

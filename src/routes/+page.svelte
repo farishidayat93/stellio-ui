@@ -1,94 +1,97 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
-	import axios from 'axios';
 
 	let { data }: PageProps = $props();
 
-	type AttributeDetail = { attributeName: string; attributeTypes: string[] };
-	type TypeInfo = { entityCount: number; attributeDetails: AttributeDetail[] };
+	/**
+	 * The sections of the app, filtered down to the ones this deployment enables.
+	 * Settings is always available: it is where an unconfigured instance is set up.
+	 */
+	const cards = $derived(
+		[
+			{
+				href: resolve('/entities'),
+				title: 'Entities',
+				description:
+					'Browse every entity type, see how many entities it holds, inspect its attributes and filter the entities it contains.',
+				enabled: data.features.entityTypes
+			},
+			{
+				href: resolve('/subscriptions'),
+				title: 'Subscriptions',
+				description:
+					'Inspect the subscriptions registered with the broker, their triggers, notification endpoints and delivery counts.',
+				enabled: data.features.subscriptions
+			},
+			{
+				href: resolve('/attributes'),
+				title: 'Attributes',
+				description:
+					'Review every attribute found across the types and decide which ones are shown as forms, with their field type and value.',
+				enabled: data.features.attributes
+			},
+			{
+				href: resolve('/settings'),
+				title: 'Settings',
+				description:
+					'Point the UI at a Stellio context broker, test the connection and choose the local database that caches type information.',
+				enabled: true
+			}
+		].filter((card) => card.enabled)
+	);
 
-	let selected = $state<{ typeName: string; entityCount: number } | null>(null);
-	let attributes = $state<AttributeDetail[]>([]);
-	let loading = $state(false);
-
-	async function selectType(typeName: string, entityCount: number) {
-		if (selected?.typeName === typeName) { selected = null; attributes = []; return; }
-		selected = { typeName, entityCount };
-		loading = true;
-		const { data: info }: { data: TypeInfo } = await axios.get(`/api/types/${typeName}`);
-		attributes = info.attributeDetails;
-		loading = false;
-	}
+	const endpoint = $derived(
+		data.connection.host && data.connection.port
+			? `${data.connection.host}:${data.connection.port}`
+			: null
+	);
 </script>
 
-<div class="flex gap-6 h-full">
-	<!-- Type list -->
-	<div class="w-72 shrink-0">
-		{#if data.types.length === 0}
-			<p class="text-gray-500 text-sm">No types found.</p>
+<div class="mx-auto max-w-3xl space-y-8">
+	<header class="space-y-3">
+		<p class="text-xs font-medium tracking-wide text-ink-faint uppercase">NGSI-LD context broker</p>
+		<h1 class="text-2xl font-semibold tracking-tight">Stellio UI</h1>
+		<p class="max-w-xl text-sm text-ink-muted">
+			Explore the entities, subscriptions and attributes of a Stellio context broker, and tune how
+			this UI connects to it.
+		</p>
+	</header>
+
+	<div class="flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm">
+		<span
+			class="h-2 w-2 shrink-0 rounded-full {data.stellioConfigured
+				? 'bg-success-ink'
+				: 'bg-danger-ink'}"
+		></span>
+		{#if endpoint}
+			<span class="text-ink-muted">
+				Connected to <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-xs"
+					>{endpoint}</code
+				>
+			</span>
 		{:else}
-			<ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg bg-white">
-				{#each data.types as type}
-					<li>
-						<button
-							onclick={() => selectType(type.typeName, type.entityCount)}
-							class="w-full px-4 py-3 text-sm text-left transition-colors flex items-center justify-between
-								{selected?.typeName === type.typeName ? data.t.active : 'hover:bg-gray-50'}"
-						>
-							<span class="font-medium">{type.typeName}</span>
-							<span class="flex flex-col items-end text-xs text-gray-400">
-								<span>{type.entityCount} entities</span>
-								<span>{type.attributeCount} attrs</span>
-							</span>
-						</button>
-					</li>
-				{/each}
-			</ul>
+			<span class="text-ink-muted">No context broker configured yet.</span>
+		{/if}
+		{#if !data.stellioConfigured}
+			<a
+				href={resolve('/settings')}
+				class="ml-auto text-xs font-medium text-accent-soft-ink hover:underline">Configure</a
+			>
 		{/if}
 	</div>
 
-	<!-- Right panel -->
-	{#if selected}
-		<div class="flex-1 border border-gray-200 rounded-lg bg-white overflow-y-auto">
-			<div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-				<div>
-					<span class="font-semibold text-sm">{selected.typeName}</span>
-					<span class="ml-2 text-xs text-gray-400">{selected.entityCount} entities</span>
-				</div>
-				<button onclick={() => { selected = null; attributes = []; }} class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
-			</div>
-
-			{#if loading}
-				<p class="text-xs text-gray-400 p-5">Loading...</p>
-			{:else}
-				<div class="p-5 space-y-4">
-					{#each attributes as attr}
-						<div class="space-y-1">
-							<div class="flex items-center gap-2">
-								<label class="text-sm font-medium text-gray-700">{attr.attributeName}</label>
-								{#each attr.attributeTypes as t}
-									<span class="px-1.5 py-0.5 rounded text-xs {data.t.badge}">{t}</span>
-								{/each}
-							</div>
-
-							{#if attr.attributeTypes.includes('GeoProperty')}
-								<div class="flex gap-2">
-									<input type="number" placeholder="Latitude" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
-									<input type="number" placeholder="Longitude" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
-								</div>
-							{:else if attr.attributeTypes.includes('Relationship')}
-								<input type="text" placeholder="Entity URN..." class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
-							{:else}
-								<input type="text" placeholder="Value..." class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 {data.t.ring}" />
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-	{:else}
-		<div class="flex-1 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
-			Select a type to view its attributes
-		</div>
-	{/if}
+	<ul class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+		{#each cards as card (card.href)}
+			<li>
+				<a
+					href={card.href}
+					class="flex h-full flex-col gap-1.5 rounded-lg border border-line bg-surface p-5 transition-colors hover:border-accent-ring hover:bg-surface-2"
+				>
+					<span class="text-sm font-semibold">{card.title}</span>
+					<span class="text-xs leading-relaxed text-ink-muted">{card.description}</span>
+				</a>
+			</li>
+		{/each}
+	</ul>
 </div>

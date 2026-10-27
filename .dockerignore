@@ -1,0 +1,37 @@
+# Keep the build context small: everything here is either reinstalled inside the
+# image or must never be baked into it.
+node_modules
+.svelte-kit
+build
+.output
+.vercel
+.netlify
+.wrangler
+
+# Local state and secrets. `.env` is deliberately absent from the build context;
+# the Dockerfile creates a throwaway `.env` from the values in `.env.example`
+# because SvelteKit's build-time env validation needs the file to exist.
+.env
+.env.*
+!.env.example
+stellio-ui.db
+stellio-ui.db-journal
+stellio-ui.db-wal
+stellio-ui.db-shm
+
+# Dev / CI leftovers
+.git
+.gitignore
+.vscode
+test-results
+playwright-report
+*.timestamp-*
+
+Dockerfile
+.dockerignore
+compose.yaml
+compose.yml
+
+# Docs and tooling the image does not need
+README.md
+LICENSE

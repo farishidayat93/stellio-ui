@@ -1,2 +1,135 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+/*
+ * Semantic color tokens.
+ *
+ * Page components never use raw palette utilities (bg-white, text-gray-500, …).
+ * They use the semantic utilities generated below (bg-surface, text-ink, …), so a
+ * single `data-theme` attribute on <html> re-skins the whole app.
+ *
+ * Neutrals + status colors are plain CSS variables declared per theme further
+ * down. The accent palette is derived from `--accent-base` (set from the accent
+ * chosen in src/lib/config.ts) with `color-mix()`, so the accent automatically
+ * adapts to every theme.
+ */
+@theme inline {
+	--color-canvas: var(--canvas);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-line: var(--line);
+	--color-line-soft: var(--line-soft);
+	--color-ink: var(--ink);
+	--color-ink-muted: var(--ink-muted);
+	--color-ink-faint: var(--ink-faint);
+
+	--color-accent: color-mix(in oklab, var(--accent-base) var(--accent-mix), var(--surface));
+	--color-accent-ink: color-mix(
+		in oklab,
+		var(--accent-base) var(--accent-ink-mix),
+		var(--accent-ink-base)
+	);
+	--color-accent-ring: color-mix(in oklab, var(--accent-base) var(--ring-mix), var(--surface));
+	--color-accent-soft: color-mix(in oklab, var(--accent-base) var(--badge-mix), var(--surface));
+	--color-accent-soft-ink: color-mix(
+		in oklab,
+		var(--accent-base) var(--badge-ink-mix),
+		var(--accent-ink-base)
+	);
+
+	--color-success-soft: var(--success-soft);
+	--color-success-ink: var(--success-ink);
+	--color-danger-soft: var(--danger-soft);
+	--color-danger-ink: var(--danger-ink);
+}
+
+/* Fallback accent (overridden inline from src/lib/config.ts) */
+:root {
+	--accent-base: oklch(0.585 0.233 277);
+}
+
+/* ---------- Light (default) ---------- */
+:root,
+[data-theme='light'] {
+	color-scheme: light;
+
+	--canvas: #f9fafb;
+	--surface: #ffffff;
+	--surface-2: #f3f4f6;
+	--line: #e5e7eb;
+	--line-soft: #f3f4f6;
+	--ink: #1f2937;
+	--ink-muted: #4b5563;
+	--ink-faint: #9ca3af;
+
+	--success-soft: #dcfce7;
+	--success-ink: #15803d;
+	--danger-soft: #fee2e2;
+	--danger-ink: #b91c1c;
+
+	--accent-mix: 12%;
+	--accent-ink-mix: 74%;
+	--accent-ink-base: #000000;
+	--ring-mix: 26%;
+	--badge-mix: 18%;
+	--badge-ink-mix: 70%;
+}
+
+/* ---------- Dark (slate blue) ---------- */
+[data-theme='dark'] {
+	color-scheme: dark;
+
+	--canvas: #0f172a;
+	--surface: #1e293b;
+	--surface-2: #334155;
+	--line: #334155;
+	--line-soft: #263449;
+	--ink: #e2e8f0;
+	--ink-muted: #94a3b8;
+	--ink-faint: #64748b;
+
+	--success-soft: #14532d;
+	--success-ink: #86efac;
+	--danger-soft: #7f1d1d;
+	--danger-ink: #fca5a5;
+
+	--accent-mix: 30%;
+	--accent-ink-mix: 45%;
+	--accent-ink-base: #ffffff;
+	--ring-mix: 40%;
+	--badge-mix: 32%;
+	--badge-ink-mix: 35%;
+}
+
+/* ---------- Dim (soft neutral dark) ---------- */
+[data-theme='dim'] {
+	color-scheme: dark;
+
+	--canvas: #26262b;
+	--surface: #2f2f36;
+	--surface-2: #3a3a42;
+	--line: #45454f;
+	--line-soft: #36363d;
+	--ink: #e8e8ea;
+	--ink-muted: #a9a9b2;
+	--ink-faint: #7d7d87;
+
+	--success-soft: #1f3d2b;
+	--success-ink: #9ae6b4;
+	--danger-soft: #4a2323;
+	--danger-ink: #f3b0b0;
+
+	--accent-mix: 26%;
+	--accent-ink-mix: 48%;
+	--accent-ink-base: #ffffff;
+	--ring-mix: 36%;
+	--badge-mix: 30%;
+	--badge-ink-mix: 38%;
+}
+
+@layer base {
+	html {
+		background-color: var(--canvas);
+		color: var(--ink);
+	}
+}
